@@ -1,0 +1,258 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>SecureVault • Password Tools</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" href="/static/styles.css">
+</head>
+<body>
+
+<div class="app-shell">
+  <div class="top-bar">
+    <div class="logo">
+      <div class="logo-mark">🔐</div>
+      <span>SecureVault</span>
+    </div>
+    <div class="step-indicator">
+      <div class="step-dot" data-step-dot="1"></div>
+      <div class="step-dot" data-step-dot="2"></div>
+      <div class="step-dot" data-step-dot="3"></div>
+    </div>
+  </div>
+
+  <div class="card">
+
+    <!-- STEP 1: Welcome + mode selection -->
+    <section id="step1" class="grid-2">
+      <div class="welcome-panel">
+        <div class="pill">
+          <span>Semester 1 Project • Python + Web</span>
+        </div>
+        <h1><span class="accent">Welcome</span> to your security hub</h1>
+        <p class="subtitle">
+          Generate ultra-strong passwords or check how safe your existing ones are – all in one place.
+        </p>
+        <ul class="feature-list">
+          <li>Blue gradient UI inspired by modern security dashboards.</li>
+          <li>Clean, multi-step flow for students and everyday users.</li>
+          <li>Instant strength feedback with entropy and labels.</li>
+        </ul>
+        <p class="helper-text">
+          Built with a Python backend and a responsive frontend optimized for both mobile and desktop.
+        </p>
+      </div>
+
+      <div class="mode-panel">
+        <p class="tagline">What would you like to do today?</p>
+
+        <div class="mode-card" id="chooseGenerator">
+          <div>
+            <div class="mode-card-title">Use as Password Generator</div>
+            <div class="mode-card-desc">
+              Create strong, random passwords tailored to your requirements.
+            </div>
+          </div>
+          <span class="badge">Recommended</span>
+        </div>
+
+        <div class="mode-card secondary" id="chooseChecker">
+          <div>
+            <div class="mode-card-title">Use as Password Checker</div>
+            <div class="mode-card-desc">
+              Test an existing password and see how secure it really is.
+            </div>
+          </div>
+          <span class="badge">Analyze</span>
+        </div>
+
+        <button id="startBtn" class="btn-primary btn-block">
+          Continue
+        </button>
+
+        <div class="helper-text">
+          Tip: You can always go back and switch modes without refreshing the page.
+        </div>
+      </div>
+    </section>
+
+    <!-- STEP 2A: Generator -->
+    <section id="step2-generator" class="generator-panel hidden">
+      <h2 class="accent" style="margin:0 0 10px;font-size:1.2rem;">Password Generator</h2>
+      <p class="subtitle">
+        Adjust the settings below and generate a password that matches your security needs.
+      </p>
+
+      <div class="row">
+        <label for="length">Password length (8–20)</label>
+        <input id="length" type="number" min="8" max="20" value="12">
+        <p class="helper-text">Longer passwords are harder to crack but may be less convenient to type.</p>
+      </div>
+
+      <div class="row">
+        <label>Include uppercase letters?</label>
+        <select id="includeUppercase">
+          <option value="yes" selected>yes</option>
+          <option value="no">no</option>
+        </select>
+      </div>
+
+      <div class="row">
+        <label>Include lowercase letters?</label>
+        <select id="includeLowercase">
+          <option value="yes" selected>yes</option>
+          <option value="no">no</option>
+        </select>
+      </div>
+
+      <div class="row">
+        <label>Include digits (0–9)?</label>
+        <select id="includeDigits">
+          <option value="yes" selected>yes</option>
+          <option value="no">no</option>
+        </select>
+      </div>
+
+      <div class="row">
+        <label>Include symbols?</label>
+        <select id="includeSymbols">
+          <option value="yes" selected>yes</option>
+          <option value="no">no</option>
+        </select>
+      </div>
+
+      <button id="generateBtn" class="btn-primary btn-block">Generate password</button>
+      <div class="status" id="status"></div>
+
+      <div class="row">
+        <label for="password">Generated password</label>
+        <div class="password-output">
+          <input id="password" type="text" readonly>
+          <button class="copy-btn" id="copyBtn">Copy</button>
+        </div>
+      </div>
+
+      <div class="meter-container">
+        <div class="meter-label">
+          Strength: <span id="strengthLabel">–</span>
+        </div>
+        <div class="meter-bar">
+          <div class="meter-fill" id="meterFill"></div>
+        </div>
+      </div>
+
+      <div class="analysis">
+        Entropy: <span id="entropyValue">–</span> bits
+      </div>
+
+      <div style="margin-top:14px;display:flex;justify-content:space-between;gap:8px;">
+        <button id="backToMode1" class="btn-ghost">← Back</button>
+        <button id="goToFeedbackFromGen" class="btn-primary">Next: Feedback →</button>
+      </div>
+    </section>
+
+    <!-- STEP 2B: Password Checker -->
+    <section id="step2-checker" class="checker-panel hidden">
+      <h2 class="accent" style="margin:0 0 10px;font-size:1.2rem;">Password Strength Checker</h2>
+      <p class="subtitle">
+        Paste or type any password to instantly check its strength and estimated security.
+      </p>
+
+      <div class="row">
+        <label for="checkPassword">Enter password to check</label>
+        <input id="checkPassword" type="password" placeholder="Type or paste your password here">
+        <p class="helper-text">Your password is processed only in this session. Use HTTPS in production.</p>
+      </div>
+
+      <div class="row">
+        <button id="toggleVisibility" class="btn-ghost">Show password</button>
+      </div>
+
+      <button id="checkBtn" class="btn-primary btn-block">Check strength</button>
+      <div class="status" id="checkStatus"></div>
+
+      <div class="meter-container">
+        <div class="meter-label">
+          Strength: <span id="checkStrengthLabel">–</span>
+        </div>
+        <div class="meter-bar">
+          <div class="meter-fill" id="checkMeterFill"></div>
+        </div>
+      </div>
+
+      <div class="analysis">
+        Entropy: <span id="checkEntropyValue">–</span> bits
+      </div>
+
+      <div class="analysis" id="checkerTips">
+        Suggestions: <span>–</span>
+      </div>
+
+      <div style="margin-top:14px;display:flex;justify-content:space-between;gap:8px;">
+        <button id="backToMode2" class="btn-ghost">← Back</button>
+        <button id="goToFeedbackFromCheck" class="btn-primary">Next: Feedback →</button>
+      </div>
+    </section>
+
+    <!-- STEP 3: Feedback + Thank you -->
+    <section id="step3" class="feedback-panel hidden">
+      <h2 class="accent" style="margin:0 0 10px;font-size:1.2rem;">We value your feedback</h2>
+      <p class="subtitle">
+        Help improve this project with a quick rating and your honest suggestions.
+      </p>
+
+      <div class="row">
+        <label>How would you rate your experience?</label>
+        <div class="rating-group" id="ratingGroup">
+          <div class="rating-chip" data-rate="1">1 ⭐</div>
+          <div class="rating-chip" data-rate="2">2 ⭐</div>
+          <div class="rating-chip" data-rate="3">3 ⭐</div>
+          <div class="rating-chip" data-rate="4">4 ⭐</div>
+          <div class="rating-chip" data-rate="5">5 ⭐</div>
+        </div>
+      </div>
+
+      <div class="row">
+        <label for="improvements">What can we improve?</label>
+        <textarea id="improvements" placeholder="Example: Add dark/light theme, more languages, animations, etc."></textarea>
+      </div>
+
+      <div class="row">
+        <label for="email">(Optional) Email for follow-up</label>
+        <input id="email" type="email" placeholder="name@example.com">
+      </div>
+
+      <div class="center" style="margin-top:12px;">
+        <p class="thank-text" id="thankTextEn">
+Thank you for using our website! 🙌
+We appreciate you taking the time to explore what we’ve built. Your visit means a lot to us, and we’re constantly improving to give you an even better experience.
+Don’t be a stranger—come back anytime. There’s always something new waiting for you here. 🚀
+See you again soon!
+        </p>
+
+        <p class="thank-text hidden" id="thankTextHi">
+हमारी वेबसाइट इस्तेमाल करने के लिए धन्यवाद! 🙌
+आपने जो समय निकाला, वह हमारे लिए बहुत मायने रखता है। हम लगातार इस अनुभव को और बेहतर बनाने पर काम कर रहे हैं।
+फिर ज़रूर आइए, यहाँ आपके लिए हमेशा कुछ नया तैयार रहता है। 🚀
+फिर जल्द ही मिलते हैं!
+        </p>
+
+        <p class="lang-toggle" id="langToggle">
+          हिंदी / English
+        </p>
+      </div>
+
+      <div style="margin-top:10px;display:flex;justify-content:space-between;gap:8px;">
+        <button id="backToStep2" class="btn-ghost">← Back</button>
+        <button id="submitFeedback" class="btn-primary">Submit & Finish 🎉</button>
+      </div>
+
+      <div class="status" id="feedbackStatus"></div>
+    </section>
+
+  </div>
+</div>
+
+<script src="/static/app.js"></script>
+</body>
+</html>
