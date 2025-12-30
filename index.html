@@ -5,16 +5,237 @@
   <title>SecureVault • Password Tools</title>
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <style>
-    * {
-      box-sizing: border-box;
-      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    * { box-sizing: border-box; font-family: system-ui, sans-serif; margin: 0; padding: 0; }
+    body { 
+      min-height: 100vh; 
+      display: flex; 
+      justify-content: center; 
+      align-items: center; 
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white; 
+      overflow-x: hidden;
     }
-    body {
-      margin: 0;
-      padding: 0;
-      min-height: 100vh;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      background: radial-gradient(circle at 0% 0%, #1d4ed8 0, #020617 40%), radial-gradient(circle at 100% 100%, #22c1c3 0, #020617 45%);
-      color:
+    .app-shell {
+      max-width: 500px; width: 90vw; background: rgba(255,255,255,0.1);
+      backdrop-filter: blur(20px); border-radius: 20px; padding: 2rem;
+      box-shadow: 0 20px 40px rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.2);
+    }
+    h1 { font-size: 2rem; text-align: center; margin-bottom: 1rem; background: linear-gradient(45deg, #ff6b6b, #4ecdc4); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+    .step-container { display: none; }
+    .step-container.active { display: block; animation: slideIn 0.5s ease-out; }
+    @keyframes slideIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+    .step-dots { display: flex; justify-content: center; gap: 0.5rem; margin: 2rem 0; }
+    [data-step-dot] { width: 12px; height: 12px; border-radius: 50%; background: rgba(255,255,255,0.3); cursor: pointer; transition: all 0.3s; }
+    [data-step-dot].active { background: #4ecdc4; transform: scale(1.2); box-shadow: 0 0 10px #4ecdc4; }
+    button { background: linear-gradient(45deg, #ff6b6b, #4ecdc4); border: none; padding: 1rem 2rem; border-radius: 50px; color: white; font-size: 1.1rem; font-weight: bold; cursor: pointer; transition: all 0.3s; width: 100%; margin: 1rem 0; }
+    button:hover { transform: translateY(-2px); box-shadow: 0 10px 20px rgba(0,0,0,0.3); }
+    button:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+    .input-group { margin: 1rem 0; }
+    label { display: block; margin-bottom: 0.5rem; font-weight: 500; }
+    input, select { width: 100%; padding: 1rem; border: none; border-radius: 12px; background: rgba(255,255,255,0.2); color: white; font-size: 1rem; backdrop-filter: blur(10px); }
+    input::placeholder, select { color: rgba(255,255,255,0.7); }
+    input:focus, select:focus { outline: none; box-shadow: 0 0 0 3px rgba(78,205,196,0.3); }
+    .checkbox-group { display: flex; align-items: center; gap: 0.5rem; margin: 0.5rem 0; }
+    .checkbox-group input[type="checkbox"] { width: auto; }
+    .password-display { 
+      background: rgba(0,0,0,0.3); border-radius: 12px; padding: 1.5rem; text-align: center; 
+      font-family: monospace; font-size: 1.3rem; letter-spacing: 2px; margin: 1rem 0;
+      min-height: 60px; display: flex; align-items: center; justify-content: center;
+      word-break: break-all;
+    }
+    .strength-meter { height: 8px; background: rgba(255,255,255,0.2); border-radius: 4px; overflow: hidden; margin: 1rem 0; }
+    .strength-fill { height: 100%; transition: all 0.5s; border-radius: 4px; }
+    .strength-weak { background: #ff4757; width: 33%; }
+    .strength-medium { background: #ffa502; width: 66%; }
+    .strength-strong { background: #2ed573; width: 100%; }
+    .stats-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin: 1rem 0; }
+    .stat { text-align: center; padding: 1rem; background: rgba(255,255,255,0.1); border-radius: 12px; }
+    .stat-value { font-size: 1.5rem; font-weight: bold; }
+    .copy-btn { background: rgba(255,255,255,0.2); padding: 0.5rem 1rem; border-radius: 20px; font-size: 0.9rem; width: auto; }
+    .features { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 1rem; margin: 2rem 0; }
+    .feature { text-align: center; padding: 1rem; background: rgba(255,255,255,0.1); border-radius: 12px; }
+    @media (max-width: 480px) { .app-shell { padding: 1.5rem; } h1 { font-size: 1.5rem; } }
+  </style>
+</head>
+<body>
+  <div class="app-shell">
+    <h1>🔐 SecureVault</h1>
+    
+    <!-- Step 1: Generator -->
+    <div id="step1" class="step-container active">
+      <h2>Password Generator</h2>
+      <div class="input-group">
+        <label>Length</label>
+        <input type="range" id="length" min="8" max="64" value="16">
+        <span id="lengthValue">16</span>
+      </div>
+      <div class="checkbox-group">
+        <input type="checkbox" id="uppercase" checked>
+        <label for="uppercase">Aa (Uppercase)</label>
+      </div>
+      <div class="checkbox-group">
+        <input type="checkbox" id="lowercase" checked>
+        <label for="lowercase">ab (Lowercase)</label>
+      </div>
+      <div class="checkbox-group">
+        <input type="checkbox" id="numbers" checked>
+        <label for="numbers">12 (Numbers)</label>
+      </div>
+      <div class="checkbox-group">
+        <input type="checkbox" id="symbols" checked>
+        <label for="symbols">!@# (Symbols)</label>
+      </div>
+      <button id="generateBtn">Generate Secure Password</button>
+      <div id="passwordDisplay" class="password-display" style="display:none;"></div>
+      <div id="strengthMeter" class="strength-meter" style="display:none;">
+        <div id="strengthFill" class="strength-fill"></div>
+      </div>
+      <div class="stats-grid" id="stats" style="display:none;">
+        <div class="stat">
+          <div class="stat-value" id="entropy">0</div>
+          <div>Entropy (bits)</div>
+        </div>
+        <div class="stat">
+          <div class="stat-value" id="strengthLabel">Weak</div>
+          <div>Strength</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Step 2: Checker -->
+    <div id="step2" class="step-container">
+      <h2>Password Strength Checker</h2>
+      <div class="input-group">
+        <label>Paste Password</label>
+        <textarea id="checkPassword" placeholder="Enter any password to analyze..." rows="3"></textarea>
+      </div>
+      <button id="checkBtn">Analyze Password</button>
+      <div id="checkResult" style="display:none;"></div>
+    </div>
+
+    <!-- Step 3: Features -->
+    <div id="step3" class="step-container">
+      <h2>✨ Features</h2>
+      <div class="features">
+        <div class="feature">🔒 Cryptographically Secure</div>
+        <div class="feature">⚡ Real-time Analysis</div>
+        <div class="feature">📱 Mobile Responsive</div>
+        <div class="feature">🎨 Modern Glass UI</div>
+      </div>
+      <button onclick="location.reload()">New Password</button>
+    </div>
+
+    <div class="step-dots">
+      <div data-step-dot="0" class="active"></div>
+      <div data-step-dot="1"></div>
+      <div data-step-dot="2"></div>
+    </div>
+  </div>
+
+  <script>
+    const stepContainers = document.querySelectorAll('.step-container');
+    const stepDots = document.querySelectorAll('[data-step-dot]');
+    let currentStep = 0;
+
+    // Length slider
+    document.getElementById('length').addEventListener('input', (e) => {
+      document.getElementById('lengthValue').textContent = e.target.value;
+    });
+
+    // Generate button
+    document.getElementById('generateBtn').addEventListener('click', async () => {
+      const length = document.getElementById('length').value;
+      const data = {
+        length: parseInt(length),
+        include_uppercase: document.getElementById('uppercase').checked ? 'yes' : 'no',
+        include_lowercase: document.getElementById('lowercase').checked ? 'yes' : 'no',
+        include_digits: document.getElementById('numbers').checked ? 'yes' : 'no',
+        include_symbols: document.getElementById('symbols').checked ? 'yes' : 'no'
+      };
+
+      try {
+        const response = await fetch('/api/generate', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(data)
+        });
+        const result = await response.json();
+        
+        document.getElementById('passwordDisplay').textContent = result.password;
+        document.getElementById('passwordDisplay').style.display = 'block';
+        document.getElementById('strengthMeter').style.display = 'block';
+        document.getElementById('stats').style.display = 'grid';
+        
+        document.getElementById('entropy').textContent = result.entropy;
+        document.getElementById('strengthLabel').textContent = result.strength;
+        
+        const fill = document.getElementById('strengthFill');
+        fill.className = 'strength-fill';
+        if (result.strength === 'STRONG') fill.classList.add('strength-strong');
+        else if (result.strength === 'MEDIUM') fill.classList.add('strength-medium');
+        else fill.classList.add('strength-weak');
+        
+        // Copy button
+        const copyBtn = document.createElement('button');
+        copyBtn.textContent = 'Copy';
+        copyBtn.className = 'copy-btn';
+        copyBtn.onclick = () => navigator.clipboard.writeText(result.password);
+        document.getElementById('passwordDisplay').appendChild(copyBtn);
+      } catch (error) {
+        document.getElementById('passwordDisplay').textContent = 'Error generating password';
+      }
+    });
+
+    // Check button
+    document.getElementById('checkBtn').addEventListener('click', async () => {
+      const password = document.getElementById('checkPassword').value;
+      if (!password) return;
+
+      try {
+        const response = await fetch('/api/check', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ password })
+        });
+        const result = await response.json();
+        
+        document.getElementById('checkResult').innerHTML = `
+          <div class="stats-grid">
+            <div class="stat">
+              <div class="stat-value">${result.length}</div>
+              <div>Length</div>
+            </div>
+            <div class="stat">
+              <div class="stat-value">${result.entropy}</div>
+              <div>Entropy</div>
+            </div>
+          </div>
+          <div class="strength-meter">
+            <div class="strength-fill ${result.strength.toLowerCase()}"></div>
+          </div>
+          <div style="text-align:center; margin-top:1rem;">
+            <strong>${result.strength}</strong><br>
+            ${result.tips}
+          </div>
+        `;
+        document.getElementById('checkResult').style.display = 'block';
+      } catch (error) {
+        document.getElementById('checkResult').innerHTML = '<div style="color:#ff6b6b;">Error analyzing password</div>';
+      }
+    });
+
+    // Step navigation
+    stepDots.forEach((dot, index) => {
+      dot.addEventListener('click', () => goToStep(index));
+    });
+
+    function goToStep(step) {
+      stepContainers[currentStep].classList.remove('active');
+      stepDots[currentStep].classList.remove('active');
+      currentStep = step;
+      stepContainers[step].classList.add('active');
+      stepDots[step].classList.add('active');
+    }
+  </script>
+</body>
+</html>
