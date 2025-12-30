@@ -1,65 +1,54 @@
-from flask import Flask, render_template, jsonify, request
+from flask import Flask, jsonify, request, send_from_directory
 from flask_cors import CORS
 import secrets
 import string
 import math
+import os
 
-app = Flask(__name__)
+app = Flask(__name__, static_folder='static', static_url_path='')
 CORS(app)
 
-UPPERCASE = string.ascii_uppercase
-LOWERCASE = string.ascii_lowercase
-DIGITS = string.digits
-SYMBOLS = "!@#$%^&*()-_=+[]{};:,.?/|<>"
-
-@app.route("/")
+@app.route('/')
 def home():
-    return render_template("index.html")  # ← THIS serves your blue UI!
+    return send_from_directory('.', 'index.html')
 
-@app.route("/api/generate", methods=["POST"])
+@app.route('/static/<path:path>')
+def send_static(path):
+    return send_from_directory('static', path)
+
+@app.route('/api/generate', methods=['POST'])
 def generate():
     data = request.json or {}
-    length = int(data.get("length", 12))
-    
+    length = int(data.get('length', 12))
     pools = []
-    if data.get("include_uppercase") == "yes": pools.append(UPPERCASE)
-    if data.get("include_lowercase") == "yes": pools.append(LOWERCASE)
-    if data.get("include_digits") == "yes": pools.append(DIGITS)
-    if data.get("include_symbols") == "yes": pools.append(SYMBOLS)
+    if data.get('include_uppercase') == 'yes': pools.append(string.ascii_uppercase)
+    if data.get('include_lowercase') == 'yes': pools.append(string.ascii_lowercase)
+    if data.get('include_digits') == 'yes': pools.append(string.digits)
+    if data.get('include_symbols') == 'yes': pools.append("!@#$%^&*()-_=+[]{};:,.?/|<>")
     
-    all_chars = "".join(pools)
-    password = "".join(secrets.choice(all_chars) for _ in range(length))
+    all_chars = ''.join(pools)
+    password = ''.join(secrets.choice(all_chars) for _ in range(length))
     entropy = length * math.log2(len(all_chars))
     
     return jsonify({
-        "password": password,
-        "entropy": round(entropy, 2),
-        "strength": "STRONG"
+        'password': password,
+        'entropy': round(entropy, 2),
+        'strength': 'STRONG' if entropy > 60 else 'MEDIUM'
     })
 
-@app.route("/api/check", methods=["POST"])
+@app.route('/api/check', methods=['POST'])
 def check():
     data = request.json or {}
-    password = data.get("password", "")
-    if not password:
-        return jsonify({"error": "Password required"}), 400
-    
-    charset_size = 0
-    if any(c.islower() for c in password): charset_size += 26
-    if any(c.isupper() for c in password): charset_size += 26
-    if any(c.isdigit() for c in password): charset_size += 10
-    if any(c in SYMBOLS for c in password): charset_size += 32
-    
-    entropy = len(password) * math.log2(charset_size) if charset_size else 0
-    strength = "STRONG" if entropy > 60 else "WEAK"
-    
+    password = data.get('password', '')
+    charset_size = 94  # full charset
+    entropy = len(password) * math.log2(charset_size) if password else 0
     return jsonify({
-        "length": len(password),
-        "entropy": round(entropy, 2),
-        "strength": strength,
-        "tips": "Good password!"
+        'length': len(password),
+        'entropy': round(entropy, 2),
+        'strength': 'STRONG' if entropy > 60 else 'WEAK',
+        'tips': 'Good password!'
     })
 
-if __name__ == "__main__":
-    app.run(debug=True, port=5000)
-
+if __name__ == '__main__':
+    port = int(os.environ.get('PORT', 5000))
+    app.run(host='0.0.0.0', port=port)
